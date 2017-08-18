@@ -1,4 +1,4 @@
 .debug_time
-term-react
+/term-react
 bin/*
 build/*

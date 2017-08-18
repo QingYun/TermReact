@@ -62,6 +62,10 @@ int main() {
   Store store;
   tr::Termbox tb{store, TB_OUTPUT_NORMAL};
 
-  tb.render<App>(store);
+  tb.render<App>(store, [] (const Store::StateType &state) {
+    if (state.template get<std::decay_t<decltype(state)>::Field::counter>() > 10)
+      return true;
+    return false;
+  });
   tb.runMainLoop();
 }
