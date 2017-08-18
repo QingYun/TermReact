@@ -1,4 +1,5 @@
 .debug_time
+.vscode
 /term-react
 bin/*
 build/*

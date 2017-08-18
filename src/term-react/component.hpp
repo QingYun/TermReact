@@ -40,8 +40,6 @@ public:
     updated_ = false;
   }
 
-  virtual void onKeyPress(const Event& evt) = 0;
-
   // pass the pointer around and concrete component can convert it to the actual state type
   virtual void onStoreUpdate(const void* next_state) = 0;
 };
@@ -59,9 +57,6 @@ protected:
   using StoreType = StoreT;
   StoreType& store_;
 
-  // does nothing by default, custom component can override it to react to events
-  virtual void onKeyPress_(const Event&) {};
-
   // does nothing by default, custom component may override it to update its props
   virtual void onStoreUpdate_(const void*) {}
 
@@ -71,11 +66,6 @@ protected:
   }
 public:
   Component(StoreT& store) : store_(store) {}
-  
-  void onKeyPress(const Event& evt) override {
-    onKeyPress_(evt);
-    node_->onKeyPress(evt);
-  }
   
   void onStoreUpdate(const void *next_state) override {
     onStoreUpdate_(next_state);
@@ -120,14 +110,6 @@ protected:
   virtual void onStoreUpdate_(const void*) {}
 
 public:
-  void onKeyPress(const Event& evt) override {
-    // endpoint components do not react to events directly, just pass it down
-    T* self = dynamic_cast<T*>(this);
-    for (auto& pc : self->getProps().template get<T::Props::Field::children>()) {
-      pc->onKeyPress(evt);
-    }
-  }
-  
   void onStoreUpdate(const void *next_state) override {
     T* self = dynamic_cast<T*>(this);
     onStoreUpdate_(next_state);
@@ -271,10 +253,6 @@ public:
 
   void setNextProps(typename ChildT::Props next_props) {
     next_props_ = std::move(next_props);
-  }
-  
-  void onKeyPress(const Event& evt) override {
-    component_->onKeyPress(evt);
   }
   
   void onStoreUpdate(const void *next_state) override {

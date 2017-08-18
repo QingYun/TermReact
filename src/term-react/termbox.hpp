@@ -59,11 +59,9 @@ private:
     should_exit_ = true;
   }
 
-  void handleKey_(const tb_event& evt) {
-    getRootElm_()->onKeyPress(evt);
-  }
+  void handleKey_(const tb_event&) {}
 
-  void handleMouse_(const tb_event& evt) {}
+  void handleMouse_(const tb_event&) {}
 
   void handleResize_(const tb_event& evt) {
     updateWindowWidth_(evt.w);
