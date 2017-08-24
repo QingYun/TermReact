@@ -6,6 +6,9 @@
 #include <boost/preprocessor/tuple.hpp>
 #include "./select-overload.hpp"
 
+namespace termreact {
+namespace details {
+
 struct TrivalConstruction_t {};
 
 #define IMMUTABLE_STRUCT_GET_TYPES_OP_(s, d, tuple) BOOST_PP_TUPLE_ELEM(0, tuple)
@@ -102,19 +105,19 @@ struct TrivalConstruction_t {};
   private: \
     std::shared_ptr<Tuple> pt_; \
     template <typename T, typename U> \
-    bool is_equal_(T&& t, U&& u, choice<0>, decltype(t == u)* = nullptr) { \
+    bool is_equal_(T&& t, U&& u, ::termreact::details::choice<0>, decltype(t == u)* = nullptr) { \
       return t == u; \
     } \
     template <typename T, typename U> \
-    bool is_equal_(T&& t, U&& u, choice<1>, decltype(t != u)* = nullptr) { \
+    bool is_equal_(T&& t, U&& u, ::termreact::details::choice<1>, decltype(t != u)* = nullptr) { \
       return !(t != u); \
     } \
     template <typename T, typename U> \
-    bool is_equal_(T&&, U&&, otherwise) { \
+    bool is_equal_(T&&, U&&, ::termreact::details::otherwise) { \
       return false; \
     } \
   public: \
-    class_name(TrivalConstruction_t) {} \
+    class_name(::termreact::details::TrivalConstruction_t) {} \
     template <bool B = IMMUTABLE_STRUCT_DEFAULT_CONSTRUCTIBLITY_(fields), \
               typename = std::enable_if_t<B>> \
     class_name() \
@@ -134,7 +137,7 @@ struct TrivalConstruction_t {};
                   T>::value>> \
     class_name& update(T&& v) { \
       constexpr std::size_t I = static_cast<std::size_t>(F); \
-      if (!is_equal_(std::get<I>(*pt_), v, select_overload_t{})) { \
+      if (!is_equal_(std::get<I>(*pt_), v, ::termreact::details::select_overload_t{})) { \
         if (!pt_.unique()) { \
           pt_ = std::make_shared<Tuple>(*pt_); \
         } \
@@ -163,3 +166,6 @@ struct TrivalConstruction_t {};
     } \
     explicit operator bool() const { return !!pt_; } \
   }
+
+}
+}

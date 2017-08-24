@@ -2,6 +2,8 @@
 #include <type_traits>
 #include "../src/term-react/utils/select-overload.hpp"
 
+using namespace termreact::details;
+
 int f1(choice<0>) { return 0; }
 int f1(choice<1>) { return 1; }
 

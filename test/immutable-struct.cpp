@@ -3,6 +3,8 @@
 #include <type_traits>
 #include "../src/term-react/utils/immutable-struct.hpp"
 
+using namespace termreact::details;
+
 struct C1 {
   std::string str_;
   C1(std::string s) : str_(s) { }
