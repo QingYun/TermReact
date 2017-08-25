@@ -25,48 +25,50 @@ template<typename ... Types>
 struct make_indexes : make_indexes_impl<0, index_tuple<>, Types...> 
 {}; 
 
-template<class Ret, class... TArgs, int... Indexes > 
-Ret apply_helper( Ret (*pf)(TArgs...), index_tuple< Indexes... >, std::tuple<TArgs...>&& tup) 
-{ 
-    return pf( std::forward<TArgs>( std::get<Indexes>(tup))... ); 
-} 
-
-template<class Ret, class... Args, class ... TArgs> 
-Ret applyTuple(Ret (*pf)(Args..., TArgs...), const std::tuple<TArgs...>& tup)
-{
-    return apply_helper(pf, typename make_indexes<TArgs...>::type(), std::tuple<TArgs...>(tup));
-}
-
-template<class Ret, class ... TArgs> 
-Ret applyTuple(Ret (*pf)(TArgs...), std::tuple<TArgs...>&& tup)
-{
-    return apply_helper(pf, typename make_indexes<TArgs...>::type(), std::forward<std::tuple<TArgs...>>(tup));
-}
-
 template <class ... Args>
-struct ApplyTupleWith {
+struct ApplyTuple {
 
-  template<class Ret, class... RArgs, class... TArgs, int... Indexes > 
+  template<class Ret, class... TArgs, class... RArgs, int... Indexes > 
   static Ret apply_helper_with( Ret (*pf)(Args..., TArgs...), index_tuple< Indexes... >, std::tuple<TArgs...>&& tup, RArgs&&... args) 
   { 
       return pf( std::forward<RArgs...>(args...), std::forward<TArgs>( std::get<Indexes>(tup))... ); 
   } 
 
-
-  template<class Ret, class ... TArgs, class ... RArgs> 
+  template<class Ret, class... TArgs, class ... RArgs> 
   static Ret apply(Ret (*pf)(Args..., TArgs...), const std::tuple<TArgs...>& tup, RArgs&&... args)
   {
       return apply_helper_with(pf, typename make_indexes<TArgs...>::type(), 
         std::tuple<TArgs...>(tup), std::forward<RArgs...>(args...));
   }
 
-  template<class Ret, class ... TArgs, class ... RArgs> 
+  template<class Ret, class... TArgs, class ... RArgs> 
   static Ret apply(Ret (*pf)(Args..., TArgs...), std::tuple<TArgs...>&& tup, RArgs&&... args)
   {
       return apply_helper_with(pf, typename make_indexes<TArgs...>::type(), 
         std::forward<std::tuple<TArgs...>>(tup), std::forward<RArgs...>(args...));
   }
 
+};
+
+template <>
+struct ApplyTuple<> {
+  template<class Ret, class... TArgs, int... Indexes > 
+  static Ret apply_helper( Ret (*pf)(TArgs...), index_tuple< Indexes... >, std::tuple<TArgs...>&& tup) 
+  { 
+      return pf( std::forward<TArgs>( std::get<Indexes>(tup))... ); 
+  } 
+
+  template<class Ret, class ... TArgs> 
+  static Ret apply(Ret (*pf)(TArgs...), std::tuple<TArgs...>&& tup)
+  {
+      return apply_helper(pf, typename make_indexes<TArgs...>::type(), std::forward<std::tuple<TArgs...>>(tup));
+  }
+
+  template<class Ret, class ... TArgs> 
+  static Ret apply(Ret (*pf)(TArgs...), const std::tuple<TArgs...>& tup)
+  {
+      return apply_helper(pf, typename make_indexes<TArgs...>::type(), std::tuple<TArgs...>(tup));
+  }
 };
 
 }
