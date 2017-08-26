@@ -12,13 +12,11 @@ enum class Action {
   increaseCounter
 };
 
-PASS_REDUCER(counterReducer);
 INIT_REDUCER(counterReducer, () { return 0; });
 REDUCER(counterReducer, (Action::increaseCounter), (int prev_counter) {
   return prev_counter + 1;
 });
 
-PASS_REDUCER(messageReducer);
 INIT_REDUCER(messageReducer, () { return "Hello World"; });
 
 DECL_STORE(Store,
@@ -40,10 +38,14 @@ CREATE_COMPONENT_CLASS(App) {
   void render_() {
     RENDER_COMPONENT(tr::CenteredBox, ATTRIBUTES(
       (width, PROPS(greeting).size() + 10)
-      (height, 5)
+      (height, 1)
     )) {
       RENDER_COMPONENT(tr::CenteredText, "greetingID", ATTRIBUTES(
         (msg, PROPS(greeting) + " x" + std::to_string(PROPS(times)))
+      )) { NO_CHILDREN };
+      RENDER_COMPONENT(tr::CenteredText, "greetingID2", ATTRIBUTES(
+        (offset_y, 1)
+        (msg, "greeting *" + std::to_string(PROPS(times)))
       )) { NO_CHILDREN };
     };
   }
@@ -54,7 +56,9 @@ CREATE_COMPONENT_CLASS(App) {
 
 public:
   COMPONENT_WILL_MOUNT(App) {}
-  void componentWillUpdate(const Props&) {}
+  void componentWillUpdate(const Props&) {
+    logger() << typeid(std::decay_t<decltype(*this)>).hash_code();
+  }
 };
 
 int main() {

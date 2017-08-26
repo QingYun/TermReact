@@ -12,7 +12,6 @@
 #include "./utils/immutable-struct.hpp"
 #include "./canvas.hpp"
 #include "./action.hpp"
-#include "./event.hpp"
 
 namespace termreact {
 namespace details {
@@ -73,50 +72,6 @@ public:
   }
   
   friend class details::ComponentAccessor<StoreType>;
-};
-
-// base class for all endpoint components
-template <typename T>
-class EndComponent : public ComponentBase {
-protected:
-  void render_() override {
-    // endpoint components do not render new components,
-    // so just render children passed to it
-    T* self = dynamic_cast<T*>(this);
-    for (auto& pc : self->getProps().template get<T::Props::Field::children>()) {
-      pc->render();
-    }
-  }
-
-  void present_(Canvas& canvas, bool parent_updated) override {
-    T* self = dynamic_cast<T*>(this);
-    bool should_redraw = parent_updated || updated_;
-
-    // we are pure !
-    if (should_redraw) {
-      // parent may choose to return a wrapped canvas to alter children's behavior
-      Canvas& new_canvas = self->present(canvas);
-      for (auto& pc : self->getProps().template get<T::Props::Field::children>()) {
-        pc->present(new_canvas, should_redraw);
-      }
-    } else {
-      for (auto& pc : self->getProps().template get<T::Props::Field::children>()) {
-        pc->present(canvas, should_redraw);
-      }
-    }
-  }
-  
-  // does nothing by default, custom component may override it to update its props
-  virtual void onStoreUpdate_(const void*) {}
-
-public:
-  void onStoreUpdate(const void *next_state) override {
-    T* self = dynamic_cast<T*>(this);
-    onStoreUpdate_(next_state);
-    for (auto& pc : self->getProps().template get<T::Props::Field::children>()) {
-      pc->onStoreUpdate(next_state);
-    }
-  }
 };
 
 class ComponentHolder;
@@ -463,7 +418,7 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 
 #define CREATE_END_COMPONENT_CLASS(cname) \
   template <typename StoreT> class cname : public ::termreact::details::EndComponent<cname<StoreT>>
-  
+
 #define BASE_END_RENDERER ::termreact::details::EndComponent<std::decay_t<decltype(*this)>>::render_
 
 #define COMPONENT_WILL_MOUNT(cname) \
@@ -497,5 +452,7 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 #define PROPS(field) this->getProps().template get<Props::Field::field>()
 #define PROPS_FIELD(p, field) p.template get<std::decay_t<decltype(p)>::Field::field>()
 #define DISPATCH(...) this->store_.template dispatch<ACTION(__VA_ARGS__)>
+#define CHUNK_DISPATCH_BEGIN this->store_.startChunkDispatch();
+#define CHUNK_DISPATCH_END this->store_.endChunkDispatch();
 
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include "../component.hpp"
+#include "../end-component.hpp"
 
 namespace termreact {
 namespace {

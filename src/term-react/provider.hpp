@@ -4,6 +4,7 @@
 #include <type_traits>
 #include "./canvas.hpp"
 #include "./component.hpp"
+#include "./action.hpp"
 
 namespace termreact {
 namespace details {
@@ -66,7 +67,7 @@ public:
       }
     );
 
-    store.addListener([this] (const State&, const State& next_state) {
+    store.addListener([this, &store] (const State&, const State& next_state) {
       dynamic_cast<C<StoreT>*>(getRootElm_().get())->onStoreUpdate(static_cast<const void*>(&next_state));
     }, false);
 

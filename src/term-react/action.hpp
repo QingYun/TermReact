@@ -17,7 +17,9 @@ public:
 enum class BuiltinAction {
   InitStore,
   UpdateWindowWidth,
-  UpdateWindowHeight
+  UpdateWindowHeight,
+  rescanFocusable,
+  stopFocusableScanning
 };
 
 }
