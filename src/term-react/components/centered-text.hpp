@@ -9,6 +9,8 @@ CREATE_END_COMPONENT_CLASS(CenteredText) {
     (std::string, msg)
     (int, offset_x, 0)
     (int, offset_y, 0)
+    (uint16_t, frontground, 0)
+    (uint16_t, background, 0)
   );
 
   MAP_STATE_TO_END_PROPS();
@@ -23,7 +25,9 @@ public:
     canvas.writeString(
       (canvas.getWidth() - msg.size()) / 2 + PROPS(offset_x), 
       (canvas.getHeight() - 1) / 2 + PROPS(offset_y), 
-      msg
+      msg,
+      PROPS(frontground),
+      PROPS(background)
     );
     return canvas;
   }
