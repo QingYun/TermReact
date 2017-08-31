@@ -380,7 +380,8 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 #define __DETAILS_ARRAY_RENDERER_NAME BOOST_PP_CAT(__, BOOST_PP_CAT(__LINE__, ARRAY_RENDERER))
 
 #define __DETAILS_PROPS_UPDATER_OP(s, prefix, tuple) \
-  props.template update<prefix::BOOST_PP_TUPLE_ELEM(0, tuple)>(BOOST_PP_TUPLE_ELEM(1, tuple));
+  props.template update<prefix::BOOST_PP_TUPLE_ELEM(0, tuple)>(BOOST_PP_TUPLE_ENUM(BOOST_PP_TUPLE_POP_FRONT(tuple)));
+  //props.template update<prefix::BOOST_PP_TUPLE_ELEM(0, tuple)>(BOOST_PP_TUPLE_ELEM(1, tuple));
 #define __DETAILS_PROPS_UPDATER(attr) [this] (auto props) { \
     BOOST_PP_SEQ_FOR_EACH(__DETAILS_PROPS_UPDATER_OP, decltype(props)::Field, attr) \
     return props; \

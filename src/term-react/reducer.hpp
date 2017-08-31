@@ -11,35 +11,33 @@ template <typename T, T V> class EnumValue {};
 
 }
 
-#define REDUCER(name, action_tags, func_body) \
+#define REDUCER(name, action_tags, ...) \
   template <typename...> struct name; \
   template <> struct name<ACTION(BOOST_PP_SEQ_ENUM(action_tags))> { \
     constexpr static bool valid = true; \
-    static auto reduce func_body \
+    static auto reduce BOOST_PP_TUPLE_ENUM((__VA_ARGS__)) \
   }
-  
-#define INIT_REDUCER(name, func_body) \
+
+#define INIT_REDUCER(name, ...) \
   template <typename...> struct name { \
     constexpr static bool valid = false; \
   }; \
   template <> struct name<ACTION(::termreact::details::BuiltinAction::InitStore)> { \
     constexpr static bool valid = true; \
-    static auto reduce func_body \
+    static auto reduce BOOST_PP_TUPLE_ENUM((__VA_ARGS__)) \
   }
-  
-#define FUNC(...) __VA_ARGS__
 
 namespace details {
   
 INIT_REDUCER(windowWidthReducer, () { return -1; });
-REDUCER(windowWidthReducer, (BuiltinAction::UpdateWindowWidth), FUNC((int, int new_width) {
+REDUCER(windowWidthReducer, (BuiltinAction::UpdateWindowWidth), (int, int new_width) {
   return new_width;
-}));
+});
 
 INIT_REDUCER(windowHeightReducer, () { return -1; });
-REDUCER(windowHeightReducer, (BuiltinAction::UpdateWindowHeight), FUNC((int, int new_height) {
+REDUCER(windowHeightReducer, (BuiltinAction::UpdateWindowHeight), (int, int new_height) {
   return new_height;
-}));
+});
 
 }
 
