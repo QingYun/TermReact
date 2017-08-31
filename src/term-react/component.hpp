@@ -87,6 +87,9 @@ void renderComponent(ComponentBase& component, typename T::Props next_props) {
   target->render();
 }
 
+// create a non-existing component
+// NOTE: callers must start a dispatch chunk and delay until the node is inserted into the component tree
+//         or the newly created component won't get the store update
 template <typename ChildT, typename StoreT>
 std::unique_ptr<ComponentBase> createComponent(typename ChildT::Props next_props, StoreT& store) {
   auto target = std::make_unique<ChildT>(std::move(next_props), store);
@@ -189,7 +192,9 @@ protected:
     // actually create the component in the first rendering
     if (!component_) {
       calculateNextProps(nullptr);
+      store_.startChunkDispatch();
       component_ = createComponent<ChildT>(std::move(next_props_), store_);
+      store_.endChunkDispatch();
       return;
     }
     if (next_props_) {
@@ -281,7 +286,9 @@ public:
     if (typeid(ChildT).hash_code() != parent_.getType() || !parent_.getNode()) {
       // a different type component needed or no component existing at all
       parent_.setType(typeid(ChildT).hash_code());
+      parent_.getStore().startChunkDispatch();
       parent_.setNode(createComponent<ChildT>(helper_.updateProps(Props{}), parent_.getStore()));
+      parent_.getStore().endChunkDispatch();
       return;
     }
 
@@ -416,19 +423,10 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 #define CREATE_COMPONENT_CLASS(cname) \
   template <typename StoreT> class cname : public ::termreact::details::Component<StoreT>
 
-#define CREATE_END_COMPONENT_CLASS(cname) \
-  template <typename StoreT> class cname : public ::termreact::details::EndComponent<cname<StoreT>>
-
-#define BASE_END_RENDERER ::termreact::details::EndComponent<std::decay_t<decltype(*this)>>::render_
-
 #define COMPONENT_WILL_MOUNT(cname) \
   cname(Props props, StoreT& store) : ::termreact::details::Component<StoreT>{store}, props_{std::move(props)} {} \
   void componentWillMount()
 
-#define END_COMPONENT_WILL_MOUNT(cname) \
-  cname(Props props, StoreT&) : props_{std::move(props)} {} \
-  void componentWillMount()
-  
 #define STATE_FIELD_IMPL(state, F) state.template get<std::decay_t<decltype(state)>::Field::F>()
 #define STATE_FIELD(...) \
   STATE_FIELD_IMPL( \
@@ -452,7 +450,7 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 #define PROPS(field) this->getProps().template get<Props::Field::field>()
 #define PROPS_FIELD(p, field) p.template get<std::decay_t<decltype(p)>::Field::field>()
 #define DISPATCH(...) this->store_.template dispatch<ACTION(__VA_ARGS__)>
-#define CHUNK_DISPATCH_BEGIN this->store_.startChunkDispatch();
-#define CHUNK_DISPATCH_END this->store_.endChunkDispatch();
+#define CHUNK_DISPATCH_BEGIN this->store_.startChunkDispatch()
+#define CHUNK_DISPATCH_END this->store_.endChunkDispatch()
 
 }

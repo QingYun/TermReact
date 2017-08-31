@@ -38,14 +38,17 @@ CREATE_COMPONENT_CLASS(App) {
   void render_() {
     RENDER_COMPONENT(tr::CenteredBox, ATTRIBUTES(
       (width, PROPS(greeting).size() + 10)
-      (height, 1)
+      (height, 2)
+      (focusable, true)
     )) {
       RENDER_COMPONENT(tr::CenteredText, "greetingID", ATTRIBUTES(
         (msg, PROPS(greeting) + " x" + std::to_string(PROPS(times)))
+        (focusable, true)
       )) { NO_CHILDREN };
       RENDER_COMPONENT(tr::CenteredText, "greetingID2", ATTRIBUTES(
         (offset_y, 1)
         (msg, "greeting *" + std::to_string(PROPS(times)))
+        (focusable, true)
       )) { NO_CHILDREN };
     };
   }

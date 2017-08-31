@@ -10,14 +10,14 @@ const uint32_t h_wall = 0x2588;
 }
 
 CREATE_END_COMPONENT_CLASS(CenteredBox) {
-  DECL_PROPS(
+  DECL_END_PROPS(
     (int, x)
     (int, y)
     (int, width)
     (int, height)
   );
   
-  MAP_STATE_TO_PROPS(
+  MAP_STATE_TO_END_PROPS(
     (x, (STATE_FIELD(window_width) - PROPS(width)) / 2)
     (y, (STATE_FIELD(window_height) - PROPS(height)) / 2)
   )
@@ -42,7 +42,7 @@ public:
     return canvas;
   }
 
-  void componentWillUpdate(const Props&) {}
+  END_COMPONENT_WILL_UPDATE(next_props) {}
 };
 
 }

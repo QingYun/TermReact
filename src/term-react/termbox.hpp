@@ -7,6 +7,7 @@
 #include "./termbox/termbox.h"
 #include "./canvas.hpp"
 #include "./component.hpp"
+#include "./event.hpp"
 
 namespace termreact {
 
@@ -47,6 +48,8 @@ private:
   TermboxCanvas canvas_;
   bool should_exit_;
   std::function<void(int)> updateWindowWidth_, updateWindowHeight_;
+  details::Focusable *focus_;
+  std::function<void()> nextFocus_;
   std::unordered_map<int, EventHandler> event_handlers_;
 
   void render_(ComponentPointer root_elm) override {
@@ -59,7 +62,20 @@ private:
     should_exit_ = true;
   }
 
-  void handleKey_(const tb_event&) {}
+  void updateFocus_(details::Focusable *focus) {
+    if (focus == focus_) return;
+    if (focus_) focus_->onLostFocus();
+    focus_ = focus;
+    focus_->onFocus();
+  }
+
+  void handleKey_(const tb_event& evt) {
+    if (focus_ == nullptr) return;
+    if (evt.key == TB_KEY_TAB) {
+      return nextFocus_();     
+    }
+    focus_->onKeyPress(Event{ evt.mod, evt.key, evt.ch });
+  }
 
   void handleMouse_(const tb_event&) {}
 
@@ -77,6 +93,9 @@ public:
     updateWindowHeight_{[&store] (int height) { 
       store.template dispatch<ACTION(details::BuiltinAction::UpdateWindowHeight)>(height); 
     }},
+    nextFocus_{[&store] () { 
+      store.template dispatch<ACTION(details::BuiltinAction::nextFocus)>(); 
+    }},
     event_handlers_{
       {TB_EVENT_KEY, &Termbox::handleKey_}, 
       {TB_EVENT_MOUSE, &Termbox::handleMouse_}, 
@@ -91,6 +110,11 @@ public:
     }
     tb_clear();
     tb_select_output_mode(output_mode);
+
+    using State = typename Store::StateType;
+    store.addListener([this] (const State&, const State& next_state) {
+      updateFocus_(STATE_FIELD(next_state, focusables).focus);
+    });
   }
 
   ~Termbox() {
@@ -101,7 +125,7 @@ public:
     return canvas_;
   }
 
-  void runMainLoop(std::chrono::microseconds frame_duration = std::chrono::microseconds{16667}) override {
+  void runMainLoop(std::chrono::microseconds frame_duration = std::chrono::microseconds{16667 * 12}) override {
     using namespace std::chrono;
     using us = microseconds;
     using ms = milliseconds;

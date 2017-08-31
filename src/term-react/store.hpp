@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <queue>
+#include <deque>
 #include <functional>
 #include <type_traits>
 #include <boost/preprocessor/seq.hpp>
@@ -70,44 +70,49 @@ struct UpdateStoreState {
   public: \
     DECL_STATE(STORE_ADD_BUILTIN_FIELDS(fields)); \
     using Listener = std::function<void(const StateType&, const StateType&)>; \
+    using Field = StateType::Field; \
   private: \
     StateType state_; \
-    bool in_processing_dispatches_; \
+    int in_processing_dispatches_; \
     std::vector<Listener> listeners_; \
-    std::queue<std::function<void(const StateType&, StateType&)>> pending_dispatches_; \
+    std::deque<std::function<void(const StateType&, StateType&)>> pending_dispatches_; \
     void doDispatch_() { \
-      in_processing_dispatches_ = true; \
-      StateType next_state = state_; \
+      in_processing_dispatches_++; \
       while (pending_dispatches_.size() != 0) { \
+        StateType next_state = state_; \
         pending_dispatches_.front()(state_, next_state); \
         if (next_state != state_) { \
           for (auto& listener : listeners_) { \
             listener(state_, next_state); \
           } \
         } \
-        pending_dispatches_.pop(); \
+        pending_dispatches_.pop_front(); \
+        state_ = std::move(next_state); \
       } \
-      state_ = std::move(next_state); \
-      in_processing_dispatches_ = false; \
+      in_processing_dispatches_--; \
     } \
   public: \
-    classname() : state_{STATE_INIT(STORE_ADD_BUILTIN_FIELDS(fields))}, in_processing_dispatches_{false} {} \
+    classname() : state_{STATE_INIT(STORE_ADD_BUILTIN_FIELDS(fields))}, in_processing_dispatches_{0} {} \
     template <StateType::Field F> \
     auto get() const { return state_.get<F>(); } \
     /* We have to avoid moving payloads around since they will be passed through all the reducers */ \
     template <typename... Vs, typename... Ts> \
     void dispatch(const Ts&... payload) { \
-      pending_dispatches_.emplace( \
+      pending_dispatches_.emplace_back( \
         [t = std::make_tuple(payload...)] (const StateType &state, StateType &next_state) { \
           STATE_REDUCERS(STORE_ADD_BUILTIN_FIELDS(fields)) \
         }); \
-      if (!in_processing_dispatches_) \
+      if (in_processing_dispatches_ == 0) \
         doDispatch_(); \
     } \
     /* to commit continuous dispatches (prevent any nested dispatches from */ \
     /*   being inserted into the queue in between them), put them in a chunk dispatch block*/ \
-    void startChunkDispatch() { in_processing_dispatches_ = true; } \
-    void endChunkDispatch() { doDispatch_(); } \
+    void startChunkDispatch() { in_processing_dispatches_++; } \
+    void endChunkDispatch() { if (--in_processing_dispatches_ == 0) doDispatch_(); } \
+    void clearChunkDispatch() { \
+      pending_dispatches_.clear(); \
+      in_processing_dispatches_--; \
+    } \
     void addListener(Listener listener, bool immediate_call = true) { \
       if (immediate_call) listener(state_, state_); \
       listeners_.push_back(std::move(listener)); \

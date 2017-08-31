@@ -67,11 +67,14 @@ public:
       }
     );
 
-    store.addListener([this, &store] (const State&, const State& next_state) {
+    store.addListener([this] (const State&, const State& next_state) {
       dynamic_cast<C<StoreT>*>(getRootElm_().get())->onStoreUpdate(static_cast<const void*>(&next_state));
     }, false);
 
+    store.startChunkDispatch();
     render_(details::createComponent<CT>(typename CT::Props{}, store));
+    store.endChunkDispatch();
+    store.template dispatch<ACTION(::termreact::details::BuiltinAction::selectFocus)>();
   }
 };
 

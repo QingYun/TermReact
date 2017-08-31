@@ -19,7 +19,11 @@ enum class BuiltinAction {
   UpdateWindowWidth,
   UpdateWindowHeight,
   rescanFocusable,
-  stopFocusableScanning
+  stopFocusableScanning,
+  registerFocusable,
+  unregisterFocusable,
+  selectFocus,
+  nextFocus
 };
 
 }
