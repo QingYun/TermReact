@@ -24,6 +24,7 @@ CREATE_END_COMPONENT_CLASS(CenteredBox) {
   
 public:
   END_COMPONENT_WILL_MOUNT(CenteredBox) {}
+  END_COMPONENT_WILL_UNMOUNT(CenteredBox) {}
 
   Canvas& present(Canvas& canvas) {
     auto canvas_slice = canvas.slice(PROPS(x), PROPS(y), PROPS(width), PROPS(height));

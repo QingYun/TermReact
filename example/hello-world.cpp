@@ -84,7 +84,7 @@ CREATE_COMPONENT_CLASS(App) {
   void render_() {
     RENDER_COMPONENT(tr::CenteredBox, ATTRIBUTES(
       (width, (PROPS(greeting).size() + 10) * PROPS(boxFactor))
-      (height, 2 * PROPS(boxFactor))
+      (height, 3 * PROPS(boxFactor))
       (focusable, PROPS(times) < 5)
       (onKeyPress, [this] (tr::Event evt) { this->onKeyPress_(evt); })
       (onFocus, [this] () { DISPATCH(AppState::Box, Action::Enlarge)(); })
@@ -108,6 +108,13 @@ CREATE_COMPONENT_CLASS(App) {
         (onFocus, [this] () { DISPATCH(AppState::Text2, Action::Highlight)(); })
         (onLostFocus, [this] () { DISPATCH(AppState::Text2, Action::ResetHighlight)(); })
       )) { NO_CHILDREN };
+      if (PROPS(times) % 2) {
+        RENDER_COMPONENT(tr::CenteredText, "greetingID3", ATTRIBUTES(
+          (offset_y, 2)
+          (msg, "switch *" + std::to_string(PROPS(times)))
+          (focusable, true)
+        )) { NO_CHILDREN };
+      }
     };
   }
 

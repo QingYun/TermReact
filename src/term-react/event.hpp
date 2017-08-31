@@ -57,7 +57,6 @@ REDUCER(focusableReducer, (BuiltinAction::selectFocus), (FocusableStore prev) {
 // focusables dispatch register action as the response to the scanning
 REDUCER(focusableReducer, (BuiltinAction::registerFocusable), (FocusableStore prev, size_t build, Focusable *focusable) {
   if (build != prev.build) return prev;
-  logger() << "register " << focusable << std::endl;
   auto focusables = std::move(prev.focusables);
   focusables.push_back(focusable);
   return FocusableStore{ prev.rescanning, prev.build, prev.focus, std::move(focusables) };
@@ -66,11 +65,10 @@ REDUCER(focusableReducer, (BuiltinAction::registerFocusable), (FocusableStore pr
 // triggered by removing a focusable. switch to next if the current focus is being removed.
 REDUCER(focusableReducer, (BuiltinAction::unregisterFocusable), (FocusableStore prev, size_t build, Focusable *focusable) {
   if (build != prev.build) return prev;
-  logger() << "unregister " << focusable << std::endl;
   auto focusables = std::move(prev.focusables);
   auto new_focus = prev.focus;
+  auto cur = std::find(focusables.begin(), focusables.end(), focusable);
   if (focusable == prev.focus) {
-    auto cur = std::find(focusables.begin(), focusables.end(), focusable);
     if ((cur + 1) == focusables.end()) {
       if (focusables.size() == 1) {
         new_focus = nullptr;
@@ -80,10 +78,8 @@ REDUCER(focusableReducer, (BuiltinAction::unregisterFocusable), (FocusableStore 
     } else {
       new_focus = *(cur + 1);
     }
-    focusables.erase(cur);
-  } else {
-    std::remove(focusables.begin(), focusables.end(), focusable);
-  }
+  }     
+  focusables.erase(cur);
   return FocusableStore{ prev.rescanning, prev.build, new_focus, std::move(focusables) };
 });
 

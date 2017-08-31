@@ -86,6 +86,18 @@ public:
   } \
   void componentWillMount()
 
+#define END_COMPONENT_WILL_UNMOUNT(cname) \
+  ~cname() { \
+    if (PROPS(focusable)) { \
+      DISPATCH(::termreact::details::BuiltinAction::unregisterFocusable)( \
+        STATE_FIELD(this->store_, focusables).build, \
+        static_cast<::termreact::details::Focusable*>(this) \
+      ); \
+    } \
+    customComponentWillUnmount_(); \
+  } \
+  void customComponentWillUnmount_()
+
 #define END_COMPONENT_WILL_UPDATE(next_props) \
   void componentWillUpdate(const Props &next_props) { \
     if ((PROPS(focusable) != PROPS_FIELD(next_props, focusable))) { \

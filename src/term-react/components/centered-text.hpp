@@ -17,6 +17,7 @@ CREATE_END_COMPONENT_CLASS(CenteredText) {
  
 public:
   END_COMPONENT_WILL_MOUNT(CenteredText) {}
+  END_COMPONENT_WILL_UNMOUNT(CenteredText) {}
 
   END_COMPONENT_WILL_UPDATE(next_props) {}
 
