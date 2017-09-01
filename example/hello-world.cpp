@@ -86,6 +86,8 @@ ComponentClass(App) {
     Component(tr::Box, Attr(
       (width, (Props(greeting).size() + 10) * Props(boxFactor))
       (height, 5 * Props(boxFactor))
+      (getTop, [this] (int, int h) { return (h - 5 * Props(boxFactor)) / 2; })
+      (getLeft, [this] (int w, int) { return (w - (Props(greeting).size() + 10) * Props(boxFactor)) / 2; })
       (border, '+')
       (focusable, Props(times) < 5)
       (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })

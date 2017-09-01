@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "../end-component.hpp"
 
 namespace termreact {
@@ -13,6 +14,10 @@ CREATE_END_COMPONENT_CLASS(Box) {
     (int, top, 0)
     (int, height, TERMREACT_FULL_HEIGHT)
     (int, width, TERMREACT_FULL_WIDTH)
+    (std::function<int(int, int)>, getLeft)
+    (std::function<int(int, int)>, getTop)
+    (std::function<int(int, int)>, getHeight)
+    (std::function<int(int, int)>, getWidth)
     (uint32_t, border, TERMREACT_NO_BORDER)
     (uint32_t, border_top, TERMREACT_NO_BORDER)
     (uint32_t, border_bottom, TERMREACT_NO_BORDER)
@@ -31,9 +36,21 @@ public:
   END_COMPONENT_WILL_UPDATE(next_props) {}
 
   CanvasSlice present(CanvasSlice canvas) {
-    auto width = PROPS(width) == TERMREACT_FULL_WIDTH ? canvas.getWidth() : PROPS(width);
-    auto height = PROPS(height) == TERMREACT_FULL_HEIGHT ? canvas.getHeight() : PROPS(height);
-    auto canvas_slice = canvas.slice(PROPS(left), PROPS(top), width, height);
+    auto width = canvas.getWidth();
+    if (PROPS(width) != TERMREACT_FULL_WIDTH) width = PROPS(width);
+    else if (PROPS(getWidth)) width = PROPS(getWidth)(canvas.getWidth(), canvas.getHeight());
+
+    auto height = canvas.getHeight();
+    if (PROPS(height) != TERMREACT_FULL_HEIGHT) height = PROPS(height);
+    else if (PROPS(getHeight)) height = PROPS(getHeight)(canvas.getWidth(), canvas.getHeight());
+
+    auto left = PROPS(left);
+    if (PROPS(getLeft)) left = PROPS(getLeft)(canvas.getWidth(), canvas.getHeight());
+
+    auto top = PROPS(top);
+    if (PROPS(getTop)) top = PROPS(getTop)(canvas.getWidth(), canvas.getHeight());
+
+    auto canvas_slice = canvas.slice(left, top, width, height);
 
     auto border_left = PROPS(border_left) == TERMREACT_NO_BORDER ? PROPS(border) : PROPS(border_left);
     if (border_left != TERMREACT_NO_BORDER) {
