@@ -105,7 +105,7 @@ ComponentClass(App) {
         (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
         (onFocus, [this] () { Dispatch(AppState::Text1, Action::Highlight)(); })
         (onLostFocus, [this] () { Dispatch(AppState::Text1, Action::ResetHighlight)(); })
-      )) { NO_CHILDREN };
+      )) { NoChildren };
       Component(tr::Box, "greetingID2", Attr(
         (top, 1)
         (height, 1)
@@ -116,14 +116,14 @@ ComponentClass(App) {
         (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
         (onFocus, [this] () { Dispatch(AppState::Text2, Action::Highlight)(); })
         (onLostFocus, [this] () { Dispatch(AppState::Text2, Action::ResetHighlight)(); })
-      )) { NO_CHILDREN };
+      )) { NoChildren };
       if (Props(times) % 2) {
         Component(tr::Box, "greetingID3", Attr(
           (top, 2)
           (height, 1)
           (text, "switch *" + std::to_string(Props(times)))
           (focusable, true)
-        )) { NO_CHILDREN };
+        )) { NoChildren };
       }
     };
   }

@@ -21,6 +21,7 @@
 #define Render() void render_()
 #define Component RENDER_COMPONENT
 #define Attr ATTRIBUTES
+#define NoChildren NO_CHILDREN
 #define ComponentWillMount COMPONENT_WILL_MOUNT
 #define ComponentWillUnmount COMPONENT_WILL_UNMOUNT
 #define ComponentWillUpdate COMPONENT_WILL_UPDATE
