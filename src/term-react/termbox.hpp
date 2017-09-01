@@ -93,6 +93,7 @@ public:
     updateWindowHeight_{[&store] (int height) { 
       store.template dispatch<ACTION(details::BuiltinAction::UpdateWindowHeight)>(height); 
     }},
+    focus_{nullptr},
     nextFocus_{[&store] () { 
       store.template dispatch<ACTION(details::BuiltinAction::nextFocus)>(); 
     }},
