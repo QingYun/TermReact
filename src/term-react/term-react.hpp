@@ -9,5 +9,4 @@
 #include "./reducer.hpp"
 #include "./store.hpp"
 #include "./termbox.hpp"
-#include "./components/centered-box.hpp"
-#include "./components/centered-text.hpp"
+#include "./components/box.hpp"

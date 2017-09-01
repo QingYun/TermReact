@@ -23,14 +23,14 @@ protected:
     }
   }
 
-  void present_(Canvas& canvas, bool parent_updated) override {
+  void present_(CanvasSlice canvas, bool parent_updated) override {
     T* self = dynamic_cast<T*>(this);
     bool should_redraw = parent_updated || updated_;
 
     // we are pure !
     if (should_redraw) {
       // parent may choose to return a wrapped canvas to alter children's behavior
-      Canvas& new_canvas = self->present(canvas);
+      CanvasSlice new_canvas = self->present(canvas);
       for (auto& pc : self->getProps().template get<T::Properties::Field::children>()) {
         pc->present(new_canvas, should_redraw);
       }

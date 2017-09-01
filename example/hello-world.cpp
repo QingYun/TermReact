@@ -83,25 +83,31 @@ ComponentClass(App) {
   )
 
   Render() {
-    Component(tr::CenteredBox, Attr(
+    Component(tr::Box, Attr(
       (width, (Props(greeting).size() + 10) * Props(boxFactor))
-      (height, 3 * Props(boxFactor))
+      (height, 5 * Props(boxFactor))
+      (border, '+')
       (focusable, Props(times) < 5)
       (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
       (onFocus, [this] () { Dispatch(AppState::Box, Action::Enlarge)(); })
       (onLostFocus, [this] () { Dispatch(AppState::Box, Action::Shrink)(); })
     )) {
-      Component(tr::CenteredText, "greetingID", Attr(
-        (msg, Props(greeting) + " x" + std::to_string(Props(times)))
+      Component(tr::Box, "greetingID", Attr(
+        (top, 0)
+        (height, 1)
+        (width, Props(greeting).size() + Props(times))
+        (border, '-')
+        (text, Props(greeting))
         (focusable, true)
         (frontground, Props(text1Highlight) ? TB_DEFAULT | TB_BOLD | TB_UNDERLINE : TB_DEFAULT)
         (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
         (onFocus, [this] () { Dispatch(AppState::Text1, Action::Highlight)(); })
         (onLostFocus, [this] () { Dispatch(AppState::Text1, Action::ResetHighlight)(); })
       )) { NO_CHILDREN };
-      Component(tr::CenteredText, "greetingID2", Attr(
-        (offset_y, 1)
-        (msg, "greeting *" + std::to_string(Props(times)))
+      Component(tr::Box, "greetingID2", Attr(
+        (top, 1)
+        (height, 1)
+        (text, "greeting *" + std::to_string(Props(times)))
         (focusable, true)
         (frontground, Props(text2Highlight) ? TB_BLACK : TB_DEFAULT)
         (background, Props(text2Highlight) ? TB_WHITE : TB_DEFAULT)
@@ -110,9 +116,10 @@ ComponentClass(App) {
         (onLostFocus, [this] () { Dispatch(AppState::Text2, Action::ResetHighlight)(); })
       )) { NO_CHILDREN };
       if (Props(times) % 2) {
-        Component(tr::CenteredText, "greetingID3", Attr(
-          (offset_y, 2)
-          (msg, "switch *" + std::to_string(Props(times)))
+        Component(tr::Box, "greetingID3", Attr(
+          (top, 2)
+          (height, 1)
+          (text, "switch *" + std::to_string(Props(times)))
           (focusable, true)
         )) { NO_CHILDREN };
       }

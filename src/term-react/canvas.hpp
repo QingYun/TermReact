@@ -51,6 +51,9 @@ public:
     target_->setCell(x + x_, y + y_, ch, fg, bg);
   }
   void present() override { target_->present(); }
+  CanvasSlice slice(int x, int y, int w, int h) {
+    return CanvasSlice{target_, x_ + x, y_ + y, w, h};
+  }
 };
 
 CanvasSlice Canvas::slice(int x, int y, int w, int h) {

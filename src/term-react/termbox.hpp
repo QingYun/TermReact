@@ -134,7 +134,7 @@ public:
     while (!should_exit_) {
       auto start_time = high_resolution_clock::now();
       canvas.clear();
-      getRootElm_()->present(canvas, true);
+      getRootElm_()->present(canvas.slice(0, 0, canvas.getWidth(), canvas.getHeight()), true);
       canvas.present();
       do {
         us us_elapsed = duration_cast<us>(high_resolution_clock::now() - start_time);

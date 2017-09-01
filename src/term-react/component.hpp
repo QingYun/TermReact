@@ -22,7 +22,7 @@ protected:
   bool updated_;
 
   virtual void render_() = 0;
-  virtual void present_(Canvas&, bool) = 0;
+  virtual void present_(CanvasSlice, bool) = 0;
 
 public:
   virtual ~ComponentBase() {}
@@ -34,7 +34,7 @@ public:
   }
 
   // draw on canvas. Decide whether to actually draw something based on this->updated_ and parent_updated
-  void present(Canvas& canvas, bool parent_updated) {
+  void present(CanvasSlice canvas, bool parent_updated) {
     present_(canvas, parent_updated);
     updated_ = false;
   }
@@ -59,7 +59,7 @@ protected:
   // does nothing by default, custom component may override it to update its props
   virtual void onStoreUpdate_(const void*) {}
 
-  void present_(Canvas& canvas, bool parent_updated) {
+  void present_(CanvasSlice canvas, bool parent_updated) {
     // only components handle present, so just forward the call
     node_->present(canvas, parent_updated || updated_);
   }
@@ -203,7 +203,7 @@ protected:
     }
   }
 
-  void present_(Canvas& canvas, bool parent_updated) override {
+  void present_(CanvasSlice canvas, bool parent_updated) override {
     if (component_) component_->present(canvas, parent_updated);
   }
 
