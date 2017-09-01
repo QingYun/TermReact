@@ -5,6 +5,7 @@
 #include "../src/term-react/term-react.hpp"
 #include "../src/term-react/termbox/termbox.cpp"
 #include "../src/term-react/termbox/utf8.cpp"
+#include "../src/term-react/dangerous-pretty-macros.h"
 
 namespace tr = termreact;
 
@@ -20,12 +21,12 @@ enum class GlobalState {
   Counter
 };
 
-INIT_REDUCER(counterReducer, () { return 0; });
-REDUCER(counterReducer, (GlobalState::Counter)(Action::Increase), (int prev_counter) {
+InitReducer(counterReducer, () { return 0; });
+Reducer(counterReducer, (GlobalState::Counter)(Action::Increase), (int prev_counter) {
   return prev_counter + 1;
 });
 
-INIT_REDUCER(messageReducer, () { return "Hello World"; });
+InitReducer(messageReducer, () { return "Hello World"; });
 
 enum class AppState {
   Box,
@@ -33,30 +34,30 @@ enum class AppState {
   Text2
 };
 
-INIT_REDUCER(boxReducer, () { return 1; });
-REDUCER(boxReducer, (AppState::Box)(Action::Enlarge), (int prev_factor) {
+InitReducer(boxReducer, () { return 1; });
+Reducer(boxReducer, (AppState::Box)(Action::Enlarge), (int prev_factor) {
   return prev_factor + 1;
 });
-REDUCER(boxReducer, (AppState::Box)(Action::Shrink), (int prev_factor) {
+Reducer(boxReducer, (AppState::Box)(Action::Shrink), (int prev_factor) {
   return prev_factor - 1;
 });
 
-INIT_REDUCER(text1Reducer, () { return false; });
-REDUCER(text1Reducer, (AppState::Text1)(Action::Highlight), (bool) {
+InitReducer(text1Reducer, () { return false; });
+Reducer(text1Reducer, (AppState::Text1)(Action::Highlight), (bool) {
   return true;
 });
-REDUCER(text1Reducer, (AppState::Text1)(Action::ResetHighlight), (bool) {
+Reducer(text1Reducer, (AppState::Text1)(Action::ResetHighlight), (bool) {
   return false;
 });
-INIT_REDUCER(text2Reducer, () { return false; });
-REDUCER(text2Reducer, (AppState::Text2)(Action::Highlight), (bool) {
+InitReducer(text2Reducer, () { return false; });
+Reducer(text2Reducer, (AppState::Text2)(Action::Highlight), (bool) {
   return true;
 });
-REDUCER(text2Reducer, (AppState::Text2)(Action::ResetHighlight), (bool) {
+Reducer(text2Reducer, (AppState::Text2)(Action::ResetHighlight), (bool) {
   return false;
 });
 
-DECL_STORE(Store,
+DeclareStore(Store,
   (int, counter, counterReducer)
   (std::string, message, messageReducer)
   (int, boxSizeFactor, boxReducer)
@@ -64,8 +65,8 @@ DECL_STORE(Store,
   (bool, text2Highlight, text2Reducer)
 );
 
-CREATE_COMPONENT_CLASS(App) {
-  DECL_PROPS(
+ComponentClass(App) {
+  DeclareProps(
     (std::string, greeting)
     (int, times)
     (int, boxFactor)
@@ -73,58 +74,59 @@ CREATE_COMPONENT_CLASS(App) {
     (bool, text2Highlight)
   );
 
-  MAP_STATE_TO_PROPS(
-    (greeting, STATE_FIELD(message))
-    (times, STATE_FIELD(counter))
-    (boxFactor, STATE_FIELD(boxSizeFactor))
-    (text1Highlight, STATE_FIELD(text1Highlight))
-    (text2Highlight, STATE_FIELD(text2Highlight))
+  MapStoreStateToProps(
+    (greeting, State(message))
+    (times, State(counter))
+    (boxFactor, State(boxSizeFactor))
+    (text1Highlight, State(text1Highlight))
+    (text2Highlight, State(text2Highlight))
   )
 
-  void render_() {
-    RENDER_COMPONENT(tr::CenteredBox, ATTRIBUTES(
-      (width, (PROPS(greeting).size() + 10) * PROPS(boxFactor))
-      (height, 3 * PROPS(boxFactor))
-      (focusable, PROPS(times) < 5)
-      (onKeyPress, [this] (tr::Event evt) { this->onKeyPress_(evt); })
-      (onFocus, [this] () { DISPATCH(AppState::Box, Action::Enlarge)(); })
-      (onLostFocus, [this] () { DISPATCH(AppState::Box, Action::Shrink)(); })
+  Render() {
+    Component(tr::CenteredBox, Attr(
+      (width, (Props(greeting).size() + 10) * Props(boxFactor))
+      (height, 3 * Props(boxFactor))
+      (focusable, Props(times) < 5)
+      (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
+      (onFocus, [this] () { Dispatch(AppState::Box, Action::Enlarge)(); })
+      (onLostFocus, [this] () { Dispatch(AppState::Box, Action::Shrink)(); })
     )) {
-      RENDER_COMPONENT(tr::CenteredText, "greetingID", ATTRIBUTES(
-        (msg, PROPS(greeting) + " x" + std::to_string(PROPS(times)))
+      Component(tr::CenteredText, "greetingID", Attr(
+        (msg, Props(greeting) + " x" + std::to_string(Props(times)))
         (focusable, true)
-        (frontground, PROPS(text1Highlight) ? TB_DEFAULT | TB_BOLD | TB_UNDERLINE : TB_DEFAULT)
-        (onKeyPress, [this] (tr::Event evt) { this->onKeyPress_(evt); })
-        (onFocus, [this] () { DISPATCH(AppState::Text1, Action::Highlight)(); })
-        (onLostFocus, [this] () { DISPATCH(AppState::Text1, Action::ResetHighlight)(); })
+        (frontground, Props(text1Highlight) ? TB_DEFAULT | TB_BOLD | TB_UNDERLINE : TB_DEFAULT)
+        (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
+        (onFocus, [this] () { Dispatch(AppState::Text1, Action::Highlight)(); })
+        (onLostFocus, [this] () { Dispatch(AppState::Text1, Action::ResetHighlight)(); })
       )) { NO_CHILDREN };
-      RENDER_COMPONENT(tr::CenteredText, "greetingID2", ATTRIBUTES(
+      Component(tr::CenteredText, "greetingID2", Attr(
         (offset_y, 1)
-        (msg, "greeting *" + std::to_string(PROPS(times)))
+        (msg, "greeting *" + std::to_string(Props(times)))
         (focusable, true)
-        (frontground, PROPS(text2Highlight) ? TB_BLACK : TB_DEFAULT)
-        (background, PROPS(text2Highlight) ? TB_WHITE : TB_DEFAULT)
-        (onKeyPress, [this] (tr::Event evt) { this->onKeyPress_(evt); })
-        (onFocus, [this] () { DISPATCH(AppState::Text2, Action::Highlight)(); })
-        (onLostFocus, [this] () { DISPATCH(AppState::Text2, Action::ResetHighlight)(); })
+        (frontground, Props(text2Highlight) ? TB_BLACK : TB_DEFAULT)
+        (background, Props(text2Highlight) ? TB_WHITE : TB_DEFAULT)
+        (onKeyPress, [this] (tr::Event evt) { this->onKeyPress(evt); })
+        (onFocus, [this] () { Dispatch(AppState::Text2, Action::Highlight)(); })
+        (onLostFocus, [this] () { Dispatch(AppState::Text2, Action::ResetHighlight)(); })
       )) { NO_CHILDREN };
-      if (PROPS(times) % 2) {
-        RENDER_COMPONENT(tr::CenteredText, "greetingID3", ATTRIBUTES(
+      if (Props(times) % 2) {
+        Component(tr::CenteredText, "greetingID3", Attr(
           (offset_y, 2)
-          (msg, "switch *" + std::to_string(PROPS(times)))
+          (msg, "switch *" + std::to_string(Props(times)))
           (focusable, true)
         )) { NO_CHILDREN };
       }
     };
   }
 
-  void onKeyPress_(const tr::Event&) {
-    DISPATCH(GlobalState::Counter, Action::Increase)();
+  void onKeyPress(const tr::Event&) {
+    Dispatch(GlobalState::Counter, Action::Increase)();
   }
 
 public:
-  COMPONENT_WILL_MOUNT(App) {}
-  void componentWillUpdate(const Props&) {
+  ComponentWillMount(App) {}
+  ComponentWillUnmount(App) {}
+  ComponentWillUpdate(next_props) {
     logger() << typeid(std::decay_t<decltype(*this)>).hash_code();
   }
 };

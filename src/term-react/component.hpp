@@ -47,7 +47,7 @@ template <typename T> class ComponentAccessor;
 
 // base class for all non-endpoint components
 template <typename StoreT>
-class Component : public ComponentBase {
+class ComponentNode : public ComponentBase {
 private:
   std::size_t node_type_;
   std::unique_ptr<ComponentBase> node_;
@@ -64,7 +64,7 @@ protected:
     node_->present(canvas, parent_updated || updated_);
   }
 public:
-  Component(StoreT& store) : store_(store) {}
+  ComponentNode(StoreT& store) : store_(store) {}
   
   void onStoreUpdate(const void *next_state) override {
     onStoreUpdate_(next_state);
@@ -80,7 +80,7 @@ using Children = std::deque<Child>;
 using ChildrenCreator = std::function<void(bool*, Children*)>;
 
 template <typename T>
-void renderComponent(ComponentBase& component, typename T::Props next_props) {
+void renderComponent(ComponentBase& component, typename T::Properties next_props) {
   T* target = dynamic_cast<T*>(&component);
   target->componentWillUpdate(next_props);
   target->setProps(std::move(next_props));
@@ -91,7 +91,7 @@ void renderComponent(ComponentBase& component, typename T::Props next_props) {
 // NOTE: callers must start a dispatch chunk and delay until the node is inserted into the component tree
 //         or the newly created component won't get the store update
 template <typename ChildT, typename StoreT>
-std::unique_ptr<ComponentBase> createComponent(typename ChildT::Props next_props, StoreT& store) {
+std::unique_ptr<ComponentBase> createComponent(typename ChildT::Properties next_props, StoreT& store) {
   auto target = std::make_unique<ChildT>(std::move(next_props), store);
   target->componentWillMount();
   target->render();
@@ -184,7 +184,7 @@ public:
 template <typename ChildT, typename StoreT>
 class ComponentHolderT : public ComponentHolder {
 private:
-  typename ChildT::Props next_props_;
+  typename ChildT::Properties next_props_;
   StoreT& store_;
 
 protected:
@@ -211,7 +211,7 @@ public:
   ComponentHolderT(std::string id, StoreT& store, Updater updater)
   : ComponentHolder{id, typeid(ChildT).hash_code(), std::move(updater)}, next_props_{TrivalConstruction_t{}}, store_{store} {}
 
-  void setNextProps(typename ChildT::Props next_props) {
+  void setNextProps(typename ChildT::Properties next_props) {
     next_props_ = std::move(next_props);
   }
   
@@ -224,9 +224,9 @@ public:
 template <typename T>
 class ComponentAccessor {
 private:
-  Component<T> *pc_;
+  ComponentNode<T> *pc_;
 public:
-  ComponentAccessor(Component<T> *pc) : pc_{pc} {}
+  ComponentAccessor(ComponentNode<T> *pc) : pc_{pc} {}
 
   std::unique_ptr<ComponentBase>& getNode() const { return pc_->node_; }
   void setNode(std::unique_ptr<ComponentBase> node) { pc_->node_ = std::move(node); }
@@ -241,17 +241,17 @@ public:
 template <typename T>
 class ComponentRendererHelper {
 public:
-  using Props = typename T::Props;
+  using Properties = typename T::Properties;
 
 private:
   const ChildrenCreator& children_creator_;
-  std::function<Props(Props)> props_updater_;
+  std::function<Properties(Properties)> props_updater_;
 
 public:
-  ComponentRendererHelper(const ChildrenCreator& children_creator, std::function<Props(Props)> props_updater)
+  ComponentRendererHelper(const ChildrenCreator& children_creator, std::function<Properties(Properties)> props_updater)
   : children_creator_{children_creator}, props_updater_{props_updater} {}
 
-  Props updateProps(Props prev_props) const {
+  Properties updateProps(Properties prev_props) const {
     auto next_props = props_updater_(std::move(prev_props));
 
     bool trivial_creator = true;
@@ -259,8 +259,8 @@ public:
     if (!trivial_creator) {
       Children next_children;
       children_creator_(&trivial_creator, &next_children);
-      next_props.template update<Props::Field::children>(
-        ComponentHolder::mergeChildren(std::move(next_children), next_props.template get<Props::Field::children>())
+      next_props.template update<Properties::Field::children>(
+        ComponentHolder::mergeChildren(std::move(next_children), next_props.template get<Properties::Field::children>())
       );
     }
 
@@ -273,13 +273,13 @@ public:
 template <typename ChildT, typename StoreT>
 class ComponentRenderer {
 private:
-  using Props = typename ComponentRendererHelper<ChildT>::Props;
+  using Properties = typename ComponentRendererHelper<ChildT>::Properties;
 
   ComponentRendererHelper<ChildT> helper_;
   ComponentAccessor<StoreT> parent_;
 
 public:
-  ComponentRenderer(Component<StoreT>* parent, ChildrenCreator& children_creator, std::function<Props(Props)> props_updater)
+  ComponentRenderer(ComponentNode<StoreT>* parent, ChildrenCreator& children_creator, std::function<Properties(Properties)> props_updater)
   : helper_{children_creator, props_updater}, parent_{parent} {}
 
   ~ComponentRenderer() {
@@ -287,7 +287,7 @@ public:
       // a different type component needed or no component existing at all
       parent_.setType(typeid(ChildT).hash_code());
       parent_.getStore().startChunkDispatch();
-      parent_.setNode(createComponent<ChildT>(helper_.updateProps(Props{}), parent_.getStore()));
+      parent_.setNode(createComponent<ChildT>(helper_.updateProps(Properties{}), parent_.getStore()));
       parent_.getStore().endChunkDispatch();
       return;
     }
@@ -305,17 +305,17 @@ public:
 template <typename ChildT, typename StoreT>
 class ChildRenderer {
 private:
-  using Props = typename ComponentRendererHelper<ChildT>::Props;
+  using Properties = typename ComponentRendererHelper<ChildT>::Properties;
 
   ChildrenCreator& children_creator_;
-  std::function<Props(Props)> props_updater_;
+  std::function<Properties(Properties)> props_updater_;
   std::string id_;
   Children& next_children_;
   StoreT& store_;
 
 public:
   ChildRenderer(std::string id, Children& next_children, ChildrenCreator& children_creator,
-                std::function<Props(Props)> props_updater, StoreT& store)
+                std::function<Properties(Properties)> props_updater, StoreT& store)
   : children_creator_{children_creator}, props_updater_{props_updater},
     id_{id}, next_children_{next_children}, store_{store} {}
 
@@ -327,7 +327,7 @@ public:
         auto component = dynamic_cast<ChildT*>(pc);
         auto holder = dynamic_cast<ComponentHolderT<ChildT, StoreT>*>(ph);
 
-        auto next_props = helper.updateProps(component ? component->getProps() : Props{});
+        auto next_props = helper.updateProps(component ? component->getProps() : Properties{});
         if (!component || next_props != component->getProps()) {
           holder->setNextProps(std::move(next_props));
           return true;
@@ -368,12 +368,12 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 
 #define DECL_PROPS(fields) \
   public: \
-    IMMUTABLE_STRUCT(Props, BOOST_PP_SEQ_PUSH_BACK(BOOST_PP_VARIADIC_SEQ_TO_SEQ(fields), \
+    IMMUTABLE_STRUCT(Properties, BOOST_PP_SEQ_PUSH_BACK(BOOST_PP_VARIADIC_SEQ_TO_SEQ(fields), \
                                                   (::termreact::details::Children, children))); \
-    const Props& getProps() const { return props_; } \
-    void setProps(Props next_props) { props_ = ::std::move(next_props); } \
+    const Properties& getProps() const { return props_; } \
+    void setProps(Properties next_props) { props_ = ::std::move(next_props); } \
   private: \
-    Props props_
+    Properties props_
 
 #define __DETAILS_CHILDREN_CREATOR_NAME(C) BOOST_PP_CAT(__, BOOST_PP_CAT(__LINE__, CHILDREN_CREATOR__))
 #define __DETAILS_COMPONENT_RENDERER_NAME(C) BOOST_PP_CAT(__, BOOST_PP_CAT(__LINE__, COMPONENT_RENDERER__))
@@ -422,34 +422,44 @@ using ComponentPointer = std::unique_ptr<details::ComponentBase>;
 #define NO_CHILDREN do { (void)trivial_creator; (void)next_children; } while(0);
 
 #define CREATE_COMPONENT_CLASS(cname) \
-  template <typename StoreT> class cname : public ::termreact::details::Component<StoreT>
+  template <typename StoreT> class cname : public ::termreact::details::ComponentNode<StoreT>
 
 #define COMPONENT_WILL_MOUNT(cname) \
-  cname(Props props, StoreT& store) : ::termreact::details::Component<StoreT>{store}, props_{std::move(props)} {} \
+  cname(Properties props, StoreT& store) : ::termreact::details::ComponentNode<StoreT>{store}, props_{std::move(props)} {} \
   void componentWillMount()
 
-#define STATE_FIELD_IMPL(state, F) state.template get<std::decay_t<decltype(state)>::Field::F>()
+#define COMPONENT_WILL_UNMOUNT(cname) \
+  ~cname()
+
+#define COMPONENT_WILL_UPDATE(next_props) \
+  void componentWillUpdate(const Properties& next_props)
+
+#define __DETAILS_GET_FIELD(state, F) state.template get<std::decay_t<decltype(state)>::Field::F>()
 #define STATE_FIELD(...) \
-  STATE_FIELD_IMPL( \
+  __DETAILS_GET_FIELD( \
     BOOST_PP_IF(BOOST_PP_EQUAL(1, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)), next_state, BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)), \
+    BOOST_PP_IF(BOOST_PP_EQUAL(1, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)), \
+                BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__), BOOST_PP_VARIADIC_ELEM(1, __VA_ARGS__)) \
+  )
+#define PROPS(...) \
+  __DETAILS_GET_FIELD( \
+    BOOST_PP_IF(BOOST_PP_EQUAL(1, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)), this->getProps(), BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)), \
     BOOST_PP_IF(BOOST_PP_EQUAL(1, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)), \
                 BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__), BOOST_PP_VARIADIC_ELEM(1, __VA_ARGS__)) \
   )
 
 #define MAP_STATE_TO_PROPS_OP(s, d, tuple) \
-  next_props.template update<Props::Field::BOOST_PP_TUPLE_ELEM(0, tuple)>(BOOST_PP_TUPLE_ELEM(1, tuple));
+  next_props.template update<Properties::Field::BOOST_PP_TUPLE_ELEM(0, tuple)>(BOOST_PP_TUPLE_ELEM(1, tuple));
 // updaters: (props_field, expr)(...)...
 #define MAP_STATE_TO_PROPS(updaters) void onStoreUpdate_(const void *next_state_p) override { \
     auto& next_state = *static_cast<const typename StoreT::StateType*>(next_state_p); \
-    Props next_props = getProps(); \
+    Properties next_props = getProps(); \
     BOOST_PP_SEQ_FOR_EACH(MAP_STATE_TO_PROPS_OP, _, BOOST_PP_VARIADIC_SEQ_TO_SEQ(updaters)) \
     if (next_props != getProps()) { \
       ::termreact::details::renderComponent<std::decay_t<decltype(*this)>>(*this, std::move(next_props)); \
     } \
   }
 
-#define PROPS(field) this->getProps().template get<Props::Field::field>()
-#define PROPS_FIELD(p, field) p.template get<std::decay_t<decltype(p)>::Field::field>()
 #define DISPATCH(...) this->store_.template dispatch<ACTION(__VA_ARGS__)>
 #define CHUNK_DISPATCH_BEGIN this->store_.startChunkDispatch()
 #define CHUNK_DISPATCH_END this->store_.endChunkDispatch()

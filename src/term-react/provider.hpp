@@ -72,7 +72,7 @@ public:
     }, false);
 
     store.startChunkDispatch();
-    render_(details::createComponent<CT>(typename CT::Props{}, store));
+    render_(details::createComponent<CT>(typename CT::Properties{}, store));
     store.endChunkDispatch();
     store.template dispatch<ACTION(::termreact::details::BuiltinAction::selectFocus)>();
   }
